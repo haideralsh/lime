@@ -143,6 +143,30 @@ struct MacTextEditor: NSViewRepresentable {
     }
 }
 
+struct StatusBar: View {
+    private enum Layout {
+        static let height: CGFloat = 24
+        static let horizontalPadding: CGFloat = 12
+        static let fontSize: CGFloat = 12
+        static let backgroundOpacity: CGFloat = 0.8
+    }
+    
+    let characterCount: Int
+    
+    var body: some View {
+        HStack {
+            Spacer()
+            Text("\(characterCount) characters")
+                .font(.system(size: Layout.fontSize, weight: .regular, design: .monospaced))
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, Layout.horizontalPadding)
+        .frame(height: Layout.height)
+        .frame(maxWidth: .infinity)
+        .background(Color.black.opacity(Layout.backgroundOpacity))
+    }
+}
+
 struct ContentView: View {
     private enum Layout {
         static let titleBarHeight: CGFloat = 28
@@ -165,6 +189,8 @@ struct ContentView: View {
                     Color.black
                         .frame(minWidth: Layout.sidebarMinWidth, maxWidth: .infinity, maxHeight: .infinity)
                 }
+                
+                StatusBar(characterCount: text.count)
             }
             
             CustomTitleBar(title: "Placeholder title")
