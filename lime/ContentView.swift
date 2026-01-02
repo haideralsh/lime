@@ -172,6 +172,7 @@ struct ContentView: View {
         static let titleBarHeight: CGFloat = 28
         static let editorMinWidth: CGFloat = 200
         static let sidebarMinWidth: CGFloat = 50
+        static let dividerColor = NSColor(white: 0.2, alpha: 1.0)
     }
     
     @State private var text = ""
@@ -182,13 +183,17 @@ struct ContentView: View {
                 Color.clear
                     .frame(height: Layout.titleBarHeight)
                 
-                HSplitView {
-                    MacTextEditor(text: $text)
-                        .frame(minWidth: Layout.editorMinWidth)
-                    
-                    Color.black
-                        .frame(minWidth: Layout.sidebarMinWidth, maxWidth: .infinity, maxHeight: .infinity)
-                }
+                CustomHSplitView(
+                    dividerColor: Layout.dividerColor,
+                    left: {
+                        MacTextEditor(text: $text)
+                            .frame(minWidth: Layout.editorMinWidth)
+                    },
+                    right: {
+                        Color.black
+                            .frame(minWidth: Layout.sidebarMinWidth, maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                )
                 
                 StatusBar(characterCount: text.count)
             }
@@ -197,6 +202,58 @@ struct ContentView: View {
         }
         .ignoresSafeArea(edges: .top)
         .background(WindowAccessor())
+    }
+}
+
+struct CustomHSplitView<Left: View, Right: View>: NSViewRepresentable {
+    let dividerColor: NSColor
+    let left: Left
+    let right: Right
+    
+    init(dividerColor: NSColor, @ViewBuilder left: () -> Left, @ViewBuilder right: () -> Right) {
+        self.dividerColor = dividerColor
+        self.left = left()
+        self.right = right()
+    }
+    
+    func makeNSView(context: Context) -> NSSplitView {
+        let splitView = StyledSplitView(dividerColor: dividerColor)
+        splitView.isVertical = true
+        splitView.dividerStyle = .thin
+        
+        let leftView = NSHostingView(rootView: left)
+        let rightView = NSHostingView(rootView: right)
+        
+        splitView.addArrangedSubview(leftView)
+        splitView.addArrangedSubview(rightView)
+        
+        return splitView
+    }
+    
+    func updateNSView(_ nsView: NSSplitView, context: Context) {
+        if let leftView = nsView.arrangedSubviews[0] as? NSHostingView<Left> {
+            leftView.rootView = left
+        }
+        if let rightView = nsView.arrangedSubviews[1] as? NSHostingView<Right> {
+            rightView.rootView = right
+        }
+    }
+    
+    private class StyledSplitView: NSSplitView {
+        let customDividerColor: NSColor
+        
+        init(dividerColor: NSColor) {
+            self.customDividerColor = dividerColor
+            super.init(frame: .zero)
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        override var dividerColor: NSColor {
+            customDividerColor
+        }
     }
 }
 
