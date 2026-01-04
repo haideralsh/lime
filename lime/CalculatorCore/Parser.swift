@@ -53,21 +53,58 @@ public final class Parser {
         currentToken
     }
     
+    /// Collects contiguous identifier tokens starting at the current index into a single name.
+    /// Returns (combinedName, combinedRange, tokenCount) or nil if no identifier at current position.
+    private func collectIdentifierSequence() -> (name: String, range: NSRange, count: Int)? {
+        guard case .identifier(let firstName) = currentToken.kind else {
+            return nil
+        }
+        
+        var names: [String] = [firstName]
+        var startRange = currentToken.range
+        var endRange = currentToken.range
+        var tokenCount = 1
+        
+        var lookAhead = index + 1
+        while lookAhead < tokens.count {
+            let token = tokens[lookAhead]
+            if case .identifier(let name) = token.kind {
+                names.append(name)
+                endRange = token.range
+                tokenCount += 1
+                lookAhead += 1
+            } else {
+                break
+            }
+        }
+        
+        let combinedName = names.joined(separator: " ")
+        let combinedRange = NSRange(
+            location: startRange.location,
+            length: endRange.location + endRange.length - startRange.location
+        )
+        
+        return (combinedName, combinedRange, tokenCount)
+    }
+    
     public func parseLine() throws -> Statement? {
         if case .eof = currentToken.kind {
             return nil
         }
         
-        if case .identifier(let name) = currentToken.kind {
-            let identToken = currentToken
-            let nextIndex = index + 1
-            if nextIndex < tokens.count, case .equal = tokens[nextIndex].kind {
-                advance()
-                advance()
+        // Check for assignment: identifier sequence followed by '='
+        if let (name, nameRange, tokenCount) = collectIdentifierSequence() {
+            let afterIdentifiers = index + tokenCount
+            if afterIdentifiers < tokens.count, case .equal = tokens[afterIdentifiers].kind {
+                // Advance past all identifier tokens and the '='
+                for _ in 0..<tokenCount {
+                    advance()
+                }
+                advance() // skip '='
                 let expr = try parseExpression()
                 return .assignment(AssignmentStmt(
                     name: name,
-                    nameRange: identToken.range,
+                    nameRange: nameRange,
                     value: expr
                 ))
             }
@@ -152,9 +189,20 @@ public final class Parser {
             advance()
             return NumberExpr(value: value, range: token.range)
             
-        case .identifier(let name):
+        case .identifier:
+            // Collect multi-word variable name
+            if let (name, range, tokenCount) = collectIdentifierSequence() {
+                for _ in 0..<tokenCount {
+                    advance()
+                }
+                return VariableExpr(name: name, range: range)
+            }
+            // Fallback (shouldn't happen since we're in identifier case)
             advance()
-            return VariableExpr(name: name, range: token.range)
+            if case .identifier(let name) = token.kind {
+                return VariableExpr(name: name, range: token.range)
+            }
+            throw ParseError.unexpectedToken(token, expected: "identifier")
             
         case .leftParen:
             let leftParen = token
