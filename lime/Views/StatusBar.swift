@@ -25,7 +25,7 @@ struct StatusBar: View {
         HStack {
             Spacer()
             Text("Total: \(formattedTotal)")
-                .font(.system(size: Layout.fontSize, weight: .regular, design: .monospaced))
+                .font(.system(size: Layout.fontSize, weight: .regular, design: .default))
                 .foregroundColor(.secondary)
         }
         .padding(.horizontal, Layout.horizontalPadding)
