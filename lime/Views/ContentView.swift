@@ -31,7 +31,7 @@ struct ContentView: View {
                         )
                 }
                 
-                StatusBar(characterCount: viewModel.text.count)
+                StatusBar(lineResults: viewModel.lineResults)
             }
             
             CustomTitleBar(title: "Lime")
