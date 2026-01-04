@@ -5,27 +5,41 @@ struct StatusBar: View {
         static let height: CGFloat = 24
         static let horizontalPadding: CGFloat = 12
         static let fontSize: CGFloat = 12
-        static let backgroundOpacity: CGFloat = 0.8
     }
     
-    let characterCount: Int
+    let lineResults: [LineResult]
+    
+    private var total: Decimal {
+        lineResults.compactMap { $0.value?.asDecimal }.reduce(0, +)
+    }
+    
+    private var formattedTotal: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 10
+        formatter.minimumFractionDigits = 0
+        return formatter.string(from: NSDecimalNumber(decimal: total)) ?? "\(total)"
+    }
     
     var body: some View {
         HStack {
             Spacer()
-            Text("\(characterCount) characters")
+            Text("Total: \(formattedTotal)")
                 .font(.system(size: Layout.fontSize, weight: .regular, design: .monospaced))
                 .foregroundColor(.secondary)
         }
         .padding(.horizontal, Layout.horizontalPadding)
         .frame(height: Layout.height)
         .frame(maxWidth: .infinity)
-        .background(Color.gray.opacity(Layout.backgroundOpacity))
+        .background(Color(white: 0.2))
     }
 }
 
 #Preview {
-    StatusBar(characterCount: 42)
-        .frame(width: 400)
+    StatusBar(lineResults: [
+        LineResult(lineIndex: 0, sourceRange: NSRange(), value: .quantity(.scalar(42)), error: nil),
+        LineResult(lineIndex: 1, sourceRange: NSRange(), value: nil, error: nil),
+        LineResult(lineIndex: 2, sourceRange: NSRange(), value: .quantity(.scalar(123.456)), error: nil),
+    ])
+    .frame(width: 400)
 }
-

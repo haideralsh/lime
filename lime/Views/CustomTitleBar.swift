@@ -5,7 +5,6 @@ struct CustomTitleBar: View {
         static let height: CGFloat = 28
         static let trafficLightWidth: CGFloat = 80
         static let fontSize: CGFloat = 13
-        static let backgroundOpacity: CGFloat = 0.8
     }
     
     let title: String
@@ -33,7 +32,7 @@ struct CustomTitleBar: View {
             }
         }
         .frame(height: Layout.height)
-        .background(Color.gray.opacity(Layout.backgroundOpacity))
+        .background(Color(white: 0.2))
     }
 }
 
