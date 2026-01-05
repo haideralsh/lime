@@ -9,6 +9,7 @@ enum SyntaxColors {
     static let `operator` = NSColor.systemPink
     static let parenthesis = NSColor.systemYellow
     static let equals = NSColor.systemGray
+    static let comment = NSColor.lightGray
     static let defaultText = NSColor.white
 }
 
@@ -89,6 +90,8 @@ final class SyntaxHighlighter {
             return SyntaxColors.equals
         case .leftParen, .rightParen:
             return SyntaxColors.parenthesis
+        case .comment:
+            return SyntaxColors.comment
         case .eof:
             return defaultColor
         }

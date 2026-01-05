@@ -26,3 +26,4 @@ final class DocumentViewModel: ObservableObject {
         recalc()
     }
 }
+

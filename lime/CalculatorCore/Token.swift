@@ -10,6 +10,7 @@ public enum TokenKind: Equatable {
     case equal
     case leftParen
     case rightParen
+    case comment(String)
     case eof
 }
 

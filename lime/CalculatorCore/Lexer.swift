@@ -32,6 +32,10 @@ public final class Lexer {
         let char = source[currentIndex]
         let startOffset = utf16Offset
         
+        if char == "#" {
+            return lexComment(startOffset: startOffset)
+        }
+        
         if char.isNumber || (char == "." && peek(offset: 1)?.isNumber == true) {
             return lexNumber(startOffset: startOffset)
         }
@@ -97,6 +101,26 @@ public final class Lexer {
         
         let range = NSRange(location: startOffset, length: utf16Offset - startOffset)
         return Token(kind: .identifier(identifier), range: range)
+    }
+    
+    private func lexComment(startOffset: Int) -> Token {
+        var commentString = ""
+        
+        // Skip the '#' character
+        advance()
+        
+        // Consume all characters until end of line or end of source
+        while currentIndex < source.endIndex {
+            let char = source[currentIndex]
+            if char == "\n" || char == "\r" {
+                break
+            }
+            commentString.append(char)
+            advance()
+        }
+        
+        let range = NSRange(location: startOffset, length: utf16Offset - startOffset)
+        return Token(kind: .comment(commentString), range: range)
     }
     
     private func skipWhitespace() {

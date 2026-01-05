@@ -53,8 +53,6 @@ public final class Parser {
         currentToken
     }
     
-    /// Collects contiguous identifier tokens starting at the current index into a single name.
-    /// Returns (combinedName, combinedRange, tokenCount) or nil if no identifier at current position.
     private func collectIdentifierSequence() -> (name: String, range: NSRange, count: Int)? {
         guard case .identifier(let firstName) = currentToken.kind else {
             return nil
@@ -88,11 +86,15 @@ public final class Parser {
     }
     
     public func parseLine() throws -> Statement? {
+        // Skip any comment tokens
+        while case .comment = currentToken.kind {
+            advance()
+        }
+        
         if case .eof = currentToken.kind {
             return nil
         }
         
-        // Check for assignment: identifier sequence followed by '='
         if let (name, nameRange, tokenCount) = collectIdentifierSequence() {
             let afterIdentifiers = index + tokenCount
             if afterIdentifiers < tokens.count, case .equal = tokens[afterIdentifiers].kind {
@@ -190,14 +192,12 @@ public final class Parser {
             return NumberExpr(value: value, range: token.range)
             
         case .identifier:
-            // Collect multi-word variable name
             if let (name, range, tokenCount) = collectIdentifierSequence() {
                 for _ in 0..<tokenCount {
                     advance()
                 }
                 return VariableExpr(name: name, range: range)
             }
-            // Fallback (shouldn't happen since we're in identifier case)
             advance()
             if case .identifier(let name) = token.kind {
                 return VariableExpr(name: name, range: token.range)
