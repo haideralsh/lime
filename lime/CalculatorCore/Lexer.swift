@@ -169,6 +169,15 @@ public final class Lexer {
             return .sumAggregate
         }
         
+        if peek(offset: 0) == "t", peek(offset: 1) == "o", peek(offset: 2) == "t", peek(offset: 3) == "a", peek(offset: 4) == "l", !isIdentChar(peek(offset: 5)) {
+            advance()
+            advance()
+            advance()
+            advance()
+            advance()
+            return .totalAggregate
+        }
+        
         if peek(offset: 0) == "a", peek(offset: 1) == "v", peek(offset: 2) == "g", !isIdentChar(peek(offset: 3)) {
             advance()
             advance()

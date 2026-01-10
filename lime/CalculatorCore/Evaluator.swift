@@ -105,6 +105,9 @@ public final class Evaluator {
             case .sum:
                 key = BuiltinAggregateName.sum
                 displayName = "=sum"
+            case .total:
+                key = BuiltinAggregateName.sum
+                displayName = "=total"
             case .avg:
                 key = BuiltinAggregateName.avg
                 displayName = "=avg"

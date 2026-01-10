@@ -72,6 +72,7 @@ public struct ParenExpr: Expr {
 public struct BuiltinAggregateExpr: Expr {
     public enum Kind {
         case sum
+        case total
         case avg
     }
     

@@ -12,6 +12,7 @@ public enum TokenKind: Equatable {
     case rightParen
     case comment(String)
     case sumAggregate
+    case totalAggregate
     case avgAggregate
     case eof
 }
