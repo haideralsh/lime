@@ -7,18 +7,14 @@ struct StatusBar: View {
         static let fontSize: CGFloat = 12
     }
     
-    let lineResults: [LineResult]
-    
-    private var total: Decimal {
-        lineResults.compactMap { $0.value?.asDecimal }.reduce(0, +)
-    }
+    let sum: Decimal
     
     private var formattedTotal: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 10
         formatter.minimumFractionDigits = 0
-        return formatter.string(from: NSDecimalNumber(decimal: total)) ?? "\(total)"
+        return formatter.string(from: NSDecimalNumber(decimal: sum)) ?? "\(sum)"
     }
     
     var body: some View {
@@ -36,10 +32,6 @@ struct StatusBar: View {
 }
 
 #Preview {
-    StatusBar(lineResults: [
-        LineResult(lineIndex: 0, sourceRange: NSRange(), value: .quantity(.scalar(42)), error: nil),
-        LineResult(lineIndex: 1, sourceRange: NSRange(), value: nil, error: nil),
-        LineResult(lineIndex: 2, sourceRange: NSRange(), value: .quantity(.scalar(123.456)), error: nil),
-    ])
+    StatusBar(sum: Decimal(165.456))
     .frame(width: 400)
 }

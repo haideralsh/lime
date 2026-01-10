@@ -24,7 +24,7 @@ struct ResultsSidebar: View {
                 .frame(minWidth: geometry.size.width, alignment: .trailing)
             }
         }
-        .background(Color.black)
+        .background(Color(red: 0x18/255.0, green: 0x19/255.0, blue: 0x17/255.0))
     }
     
     @ViewBuilder
@@ -36,10 +36,6 @@ struct ResultsSidebar: View {
                 Text(displayString)
                     .font(.system(size: Layout.fontSize, weight: .regular, design: .monospaced))
                     .foregroundColor(.white.opacity(0.7))
-            } else if let error = result.errorMessage {
-                Text(error)
-                    .font(.system(size: Layout.fontSize * 0.7, weight: .regular, design: .monospaced))
-                    .foregroundColor(.red.opacity(0.7))
             }
         }
     }

@@ -4,6 +4,7 @@ import Combine
 final class DocumentViewModel: ObservableObject {
     @Published var text: String = ""
     @Published var lineResults: [LineResult] = []
+    @Published var sum: Decimal = 0
     
     private let engine = ExpressionEngine()
     private var cancellables = Set<AnyCancellable>()
@@ -18,7 +19,9 @@ final class DocumentViewModel: ObservableObject {
     }
     
     func recalc() {
-        lineResults = engine.evaluateAll(text)
+        let result = engine.evaluateAll(text)
+        lineResults = result.lineResults
+        sum = result.sum
     }
     
     func resetEnvironment() {

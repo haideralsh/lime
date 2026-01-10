@@ -25,7 +25,7 @@ struct ContentView: View {
                 )
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            StatusBar(lineResults: viewModel.lineResults)
+            StatusBar(sum: viewModel.sum)
         }
         .background(Color.black)
         .background(WindowTabConfigurator())

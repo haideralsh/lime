@@ -72,7 +72,7 @@ struct MacTextEditor: NSViewRepresentable {
         textView.isEditable = true
         textView.isSelectable = true
         textView.drawsBackground = true
-        textView.backgroundColor = .black
+        textView.backgroundColor = NSColor(red: 0x18/255.0, green: 0x19/255.0, blue: 0x17/255.0, alpha: 1.0)
         textView.textColor = .textColor
         textView.insertionPointColor = .textColor
         textView.autoresizingMask = [.width, .height]
@@ -88,7 +88,7 @@ struct MacTextEditor: NSViewRepresentable {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
         scrollView.drawsBackground = true
-        scrollView.backgroundColor = NSColor(white: 1.0, alpha: 0.3)
+        scrollView.backgroundColor = NSColor(red: 0x18/255.0, green: 0x19/255.0, blue: 0x17/255.0, alpha: 1.0)
         textView.frame = scrollView.contentView.bounds
     }
     

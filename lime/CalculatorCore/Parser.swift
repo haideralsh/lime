@@ -204,6 +204,14 @@ public final class Parser {
             }
             throw ParseError.unexpectedToken(token, expected: "identifier")
             
+        case .sumAggregate:
+            advance()
+            return BuiltinAggregateExpr(kind: .sum, range: token.range)
+            
+        case .avgAggregate:
+            advance()
+            return BuiltinAggregateExpr(kind: .avg, range: token.range)
+            
         case .leftParen:
             let leftParen = token
             advance()
@@ -225,7 +233,7 @@ public final class Parser {
             throw ParseError.unexpectedEndOfInput
             
         default:
-            throw ParseError.unexpectedToken(token, expected: "number, variable, or (")
+            throw ParseError.unexpectedToken(token, expected: "number, variable, =sum, =avg, or (")
         }
     }
     
@@ -236,6 +244,7 @@ public final class Parser {
         case let e as BinaryExpr: return e.range
         case let e as UnaryExpr: return e.range
         case let e as ParenExpr: return e.range
+        case let e as BuiltinAggregateExpr: return e.range
         default: return NSRange(location: 0, length: 0)
         }
     }

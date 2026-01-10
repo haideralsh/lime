@@ -1,5 +1,10 @@
 import Foundation
 
+public enum BuiltinAggregateName {
+    public static let sum = "=sum"
+    public static let avg = "=avg"
+}
+
 public enum EvalError: Error, LocalizedError {
     case undefinedVariable(String, range: NSRange?)
     case divisionByZero(range: NSRange?)
@@ -92,6 +97,22 @@ public final class Evaluator {
             
         case let p as ParenExpr:
             return try eval(p.inner)
+            
+        case let a as BuiltinAggregateExpr:
+            let key: String
+            let displayName: String
+            switch a.kind {
+            case .sum:
+                key = BuiltinAggregateName.sum
+                displayName = "=sum"
+            case .avg:
+                key = BuiltinAggregateName.avg
+                displayName = "=avg"
+            }
+            guard let value = environment[key] else {
+                throw EvalError.undefinedVariable(displayName, range: a.range)
+            }
+            return value
             
         default:
             throw EvalError.typeMismatch("Unknown expression type", range: nil)

@@ -69,6 +69,21 @@ public struct ParenExpr: Expr {
     }
 }
 
+public struct BuiltinAggregateExpr: Expr {
+    public enum Kind {
+        case sum
+        case avg
+    }
+    
+    public let kind: Kind
+    public let range: NSRange
+    
+    public init(kind: Kind, range: NSRange) {
+        self.kind = kind
+        self.range = range
+    }
+}
+
 public struct AssignmentStmt {
     public let name: String
     public let nameRange: NSRange

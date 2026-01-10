@@ -52,7 +52,12 @@ public final class Lexer {
         case "-": return Token(kind: .minus, range: range)
         case "*": return Token(kind: .star, range: range)
         case "/": return Token(kind: .slash, range: range)
-        case "=": return Token(kind: .equal, range: range)
+        case "=":
+            if let aggKind = lexAggregateAfterEqual() {
+                let aggRange = NSRange(location: startOffset, length: utf16Offset - startOffset)
+                return Token(kind: aggKind, range: aggRange)
+            }
+            return Token(kind: .equal, range: range)
         case "(": return Token(kind: .leftParen, range: range)
         case ")": return Token(kind: .rightParen, range: range)
         default:
@@ -149,5 +154,28 @@ public final class Lexer {
         }
         guard index < source.endIndex else { return nil }
         return source[index]
+    }
+    
+    private func lexAggregateAfterEqual() -> TokenKind? {
+        func isIdentChar(_ c: Character?) -> Bool {
+            guard let c = c else { return false }
+            return c.isLetter || c.isNumber || c == "_"
+        }
+        
+        if peek(offset: 0) == "s", peek(offset: 1) == "u", peek(offset: 2) == "m", !isIdentChar(peek(offset: 3)) {
+            advance()
+            advance()
+            advance()
+            return .sumAggregate
+        }
+        
+        if peek(offset: 0) == "a", peek(offset: 1) == "v", peek(offset: 2) == "g", !isIdentChar(peek(offset: 3)) {
+            advance()
+            advance()
+            advance()
+            return .avgAggregate
+        }
+        
+        return nil
     }
 }
