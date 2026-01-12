@@ -19,6 +19,18 @@ public struct NumberExpr: Expr {
     }
 }
 
+public struct CurrencyNumberExpr: Expr {
+    public let value: Decimal
+    public let currencySymbol: String
+    public let range: NSRange
+    
+    public init(value: Decimal, currencySymbol: String, range: NSRange) {
+        self.value = value
+        self.currencySymbol = currencySymbol
+        self.range = range
+    }
+}
+
 public struct VariableExpr: Expr {
     public let name: String
     public let range: NSRange

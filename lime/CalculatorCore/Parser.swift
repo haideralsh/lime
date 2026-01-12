@@ -7,7 +7,7 @@ public enum ParseError: Error, LocalizedError {
     
     public var errorDescription: String? {
         switch self {
-        case .unexpectedToken(let token, let expected):
+        case .unexpectedToken(_, let expected):
             return "Unexpected token, expected \(expected)"
         case .unexpectedEndOfInput:
             return "Unexpected end of input"
@@ -59,7 +59,7 @@ public final class Parser {
         }
         
         var names: [String] = [firstName]
-        var startRange = currentToken.range
+        let startRange = currentToken.range
         var endRange = currentToken.range
         var tokenCount = 1
         
@@ -191,6 +191,22 @@ public final class Parser {
             advance()
             return NumberExpr(value: value, range: token.range)
             
+        case .currencySymbol(let symbol):
+            let symbolToken = token
+            advance()
+            
+            guard case .number(let value) = currentToken.kind else {
+                throw ParseError.unexpectedToken(currentToken, expected: "number after currency symbol")
+            }
+            let numberToken = currentToken
+            advance()
+            
+            let combinedRange = NSRange(
+                location: symbolToken.range.location,
+                length: numberToken.range.location + numberToken.range.length - symbolToken.range.location
+            )
+            return CurrencyNumberExpr(value: value, currencySymbol: symbol, range: combinedRange)
+            
         case .identifier:
             if let (name, range, tokenCount) = collectIdentifierSequence() {
                 for _ in 0..<tokenCount {
@@ -244,6 +260,7 @@ public final class Parser {
     private func exprRange(_ expr: Expr) -> NSRange {
         switch expr {
         case let e as NumberExpr: return e.range
+        case let e as CurrencyNumberExpr: return e.range
         case let e as VariableExpr: return e.range
         case let e as BinaryExpr: return e.range
         case let e as UnaryExpr: return e.range

@@ -36,6 +36,12 @@ public final class Lexer {
             return lexComment(startOffset: startOffset)
         }
         
+        if isCurrencySymbol(char) {
+            advance()
+            let range = NSRange(location: startOffset, length: utf16Offset - startOffset)
+            return Token(kind: .currencySymbol(String(char)), range: range)
+        }
+        
         if char.isNumber || (char == "." && peek(offset: 1)?.isNumber == true) {
             return lexNumber(startOffset: startOffset)
         }
@@ -154,6 +160,10 @@ public final class Lexer {
         }
         guard index < source.endIndex else { return nil }
         return source[index]
+    }
+    
+    private func isCurrencySymbol(_ c: Character) -> Bool {
+        c == "$" || c == "€" || c == "£" || c == "¥"
     }
     
     private func lexAggregateAfterEqual() -> TokenKind? {

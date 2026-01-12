@@ -53,6 +53,12 @@ public final class Evaluator {
         case let n as NumberExpr:
             return .quantity(.scalar(n.value))
             
+        case let c as CurrencyNumberExpr:
+            guard let unit = Unit.currency(forSymbol: c.currencySymbol) else {
+                throw EvalError.typeMismatch("Unknown currency symbol \(c.currencySymbol)", range: c.range)
+            }
+            return .quantity(Quantity(magnitude: c.value, unit: unit))
+            
         case let v as VariableExpr:
             guard let value = environment[v.name] else {
                 throw EvalError.undefinedVariable(v.name, range: v.range)
@@ -63,36 +69,34 @@ public final class Evaluator {
             let leftVal = try eval(b.left)
             let rightVal = try eval(b.right)
             
-            guard let leftDec = leftVal.asDecimal,
-                  let rightDec = rightVal.asDecimal else {
+            guard case .quantity(let lq) = leftVal,
+                  case .quantity(let rq) = rightVal else {
                 throw EvalError.typeMismatch("Cannot perform arithmetic", range: b.range)
             }
             
-            let result: Decimal
+            let resultQuantity: Quantity
             switch b.op {
             case .add:
-                result = leftDec + rightDec
+                resultQuantity = try add(lq, rq, range: b.range)
             case .subtract:
-                result = leftDec - rightDec
+                resultQuantity = try subtract(lq, rq, range: b.range)
             case .multiply:
-                result = leftDec * rightDec
+                resultQuantity = try multiply(lq, rq, range: b.range)
             case .divide:
-                if rightDec == 0 {
-                    throw EvalError.divisionByZero(range: b.range)
-                }
-                result = leftDec / rightDec
+                resultQuantity = try divide(lq, rq, range: b.range)
             }
-            return .quantity(.scalar(result))
+            return .quantity(resultQuantity)
             
         case let u as UnaryExpr:
             let operandVal = try eval(u.operand)
-            guard let dec = operandVal.asDecimal else {
+            guard case .quantity(var q) = operandVal else {
                 throw EvalError.typeMismatch("Cannot negate value", range: u.range)
             }
             
             switch u.op {
             case .negate:
-                return .quantity(.scalar(-dec))
+                q.magnitude = -q.magnitude
+                return .quantity(q)
             }
             
         case let p as ParenExpr:
@@ -120,5 +124,81 @@ public final class Evaluator {
         default:
             throw EvalError.typeMismatch("Unknown expression type", range: nil)
         }
+    }
+    
+    private func add(_ lhs: Quantity, _ rhs: Quantity, range: NSRange?) throws -> Quantity {
+        let lu = lhs.unit
+        let ru = rhs.unit
+        
+        if lu?.kind == .currency || ru?.kind == .currency {
+            if let lu = lu, let ru = ru, lu != ru {
+                throw EvalError.typeMismatch("Cannot add values with different currencies", range: range)
+            }
+            let unit = lu ?? ru
+            return Quantity(magnitude: lhs.magnitude + rhs.magnitude, unit: unit)
+        }
+        
+        if lu == ru {
+            return Quantity(magnitude: lhs.magnitude + rhs.magnitude, unit: lu)
+        }
+        if lu == nil {
+            return Quantity(magnitude: lhs.magnitude + rhs.magnitude, unit: ru)
+        }
+        if ru == nil {
+            return Quantity(magnitude: lhs.magnitude + rhs.magnitude, unit: lu)
+        }
+        
+        throw EvalError.typeMismatch("Cannot add values with different units", range: range)
+    }
+    
+    private func subtract(_ lhs: Quantity, _ rhs: Quantity, range: NSRange?) throws -> Quantity {
+        var negRhs = rhs
+        negRhs.magnitude = -rhs.magnitude
+        return try add(lhs, negRhs, range: range)
+    }
+    
+    private func multiply(_ lhs: Quantity, _ rhs: Quantity, range: NSRange?) throws -> Quantity {
+        let lu = lhs.unit
+        let ru = rhs.unit
+        
+        if lu?.kind == .currency && ru == nil {
+            return Quantity(magnitude: lhs.magnitude * rhs.magnitude, unit: lu)
+        }
+        if ru?.kind == .currency && lu == nil {
+            return Quantity(magnitude: lhs.magnitude * rhs.magnitude, unit: ru)
+        }
+        
+        if lu?.kind == .currency || ru?.kind == .currency {
+            return Quantity(magnitude: lhs.magnitude * rhs.magnitude, unit: ru)
+        }
+        
+        if lu == nil && ru == nil {
+            return Quantity.scalar(lhs.magnitude * rhs.magnitude)
+        }
+        
+        throw EvalError.typeMismatch("Unsupported unit multiplication", range: range)
+    }
+    
+    private func divide(_ lhs: Quantity, _ rhs: Quantity, range: NSRange?) throws -> Quantity {
+        if rhs.magnitude == 0 {
+            throw EvalError.divisionByZero(range: range)
+        }
+        
+        let lu = lhs.unit
+        let ru = rhs.unit
+        
+        if lu?.kind == .currency && ru == nil {
+            return Quantity(magnitude: lhs.magnitude / rhs.magnitude, unit: lu)
+        }
+        
+        if lu?.kind == .currency && ru?.kind == .currency {
+            return Quantity.scalar(lhs.magnitude / rhs.magnitude)
+        }
+        
+        if lu == nil && ru == nil {
+            return Quantity.scalar(lhs.magnitude / rhs.magnitude)
+        }
+        
+        throw EvalError.typeMismatch("Unsupported unit division", range: range)
     }
 }

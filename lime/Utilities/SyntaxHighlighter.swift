@@ -82,6 +82,8 @@ final class SyntaxHighlighter {
         switch tokenKind {
         case .number:
             return SyntaxColors.number
+        case .currencySymbol:
+            return SyntaxColors.number
         case .identifier:
             // Only highlight identifiers as variables if they are part of an assignment
             // (i.e., followed eventually by an equals sign, with only other identifiers in between)

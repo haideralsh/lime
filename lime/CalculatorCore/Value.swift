@@ -17,6 +17,21 @@ public struct Unit: Equatable {
         self.kind = kind
         self.toBaseFactor = toBaseFactor
     }
+    
+    public static let usd = Unit(name: "$", kind: .currency)
+    public static let eur = Unit(name: "€", kind: .currency)
+    public static let gbp = Unit(name: "£", kind: .currency)
+    public static let jpy = Unit(name: "¥", kind: .currency)
+    
+    public static func currency(forSymbol symbol: String) -> Unit? {
+        switch symbol {
+        case "$": return .usd
+        case "€": return .eur
+        case "£": return .gbp
+        case "¥": return .jpy
+        default: return nil
+        }
+    }
 }
 
 public struct Quantity: Equatable {
@@ -55,7 +70,11 @@ public enum Value: Equatable {
             let formatted = formatter.string(from: number) ?? "\(q.magnitude)"
             
             if let unit = q.unit {
-                return "\(formatted) \(unit.name)"
+                if unit.kind == .currency {
+                    return "\(unit.name)\(formatted)"
+                } else {
+                    return "\(formatted) \(unit.name)"
+                }
             }
             return formatted
         }
