@@ -14,6 +14,10 @@ public final class Environment {
         storage.removeAll()
     }
     
+    public func remove(_ name: String) {
+        storage.removeValue(forKey: name)
+    }
+    
     public var allVariables: [String: Value] {
         storage
     }

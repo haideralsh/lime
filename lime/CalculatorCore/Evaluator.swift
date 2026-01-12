@@ -3,6 +3,7 @@ import Foundation
 public enum BuiltinAggregateName {
     public static let sum = "=sum"
     public static let avg = "=avg"
+    public static let prev = "=prev"
 }
 
 public enum EvalError: Error, LocalizedError {
@@ -115,6 +116,9 @@ public final class Evaluator {
             case .avg:
                 key = BuiltinAggregateName.avg
                 displayName = "=avg"
+            case .prev:
+                key = BuiltinAggregateName.prev
+                displayName = "=prev"
             }
             guard let value = environment[key] else {
                 throw EvalError.undefinedVariable(displayName, range: a.range)

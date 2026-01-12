@@ -232,6 +232,10 @@ public final class Parser {
             advance()
             return BuiltinAggregateExpr(kind: .avg, range: token.range)
             
+        case .prevAggregate:
+            advance()
+            return BuiltinAggregateExpr(kind: .prev, range: token.range)
+            
         case .leftParen:
             let leftParen = token
             advance()
@@ -253,7 +257,7 @@ public final class Parser {
             throw ParseError.unexpectedEndOfInput
             
         default:
-            throw ParseError.unexpectedToken(token, expected: "number, variable, =sum, =total, =avg, or (")
+            throw ParseError.unexpectedToken(token, expected: "number, variable, =sum, =total, =avg, =prev, or (")
         }
     }
     

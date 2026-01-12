@@ -86,6 +86,7 @@ public struct BuiltinAggregateExpr: Expr {
         case sum
         case total
         case avg
+        case prev
     }
     
     public let kind: Kind

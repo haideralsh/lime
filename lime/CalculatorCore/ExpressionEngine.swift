@@ -219,6 +219,20 @@ public final class ExpressionEngine {
                 continue
             }
             
+            var prevValue: Value? = nil
+            for i in stride(from: idx - 1, through: 0, by: -1) {
+                if let value = results[i].value {
+                    prevValue = value
+                    break
+                }
+            }
+            
+            if let pv = prevValue {
+                environment[BuiltinAggregateName.prev] = pv
+            } else {
+                environment.remove(BuiltinAggregateName.prev)
+            }
+            
             let evaluator = Evaluator(environment: environment)
             do {
                 let value = try evaluator.evaluate(statement)
@@ -228,6 +242,22 @@ public final class ExpressionEngine {
                     value: value,
                     error: nil
                 )
+            } catch let error as EvalError {
+                if case .undefinedVariable(let name, _) = error, name == "=prev" {
+                    results[idx] = LineResult(
+                        lineIndex: idx,
+                        sourceRange: parsed.sourceRange,
+                        value: nil,
+                        error: nil
+                    )
+                } else {
+                    results[idx] = LineResult(
+                        lineIndex: idx,
+                        sourceRange: parsed.sourceRange,
+                        value: nil,
+                        error: error
+                    )
+                }
             } catch {
                 results[idx] = LineResult(
                     lineIndex: idx,
@@ -247,15 +277,28 @@ public final class ExpressionEngine {
     ) -> (sum: Value?, avg: Value?, sumDecimal: Decimal) {
         var sumDecimal = Decimal(0)
         var count: Int = 0
+        var aggregateCurrencyUnit: Unit? = nil
+        var mixedCurrencies = false
         
         for (i, result) in results.enumerated() {
             let parsed = parsedLines[i]
             
             if parsed.usesAggregate { continue }
-            guard let value = result.value, let dec = value.asDecimal else { continue }
+            guard let value = result.value else { continue }
+            guard case .quantity(let q) = value else { continue }
             
-            sumDecimal += dec
+            sumDecimal += q.magnitude
             count += 1
+            
+            if let unit = q.unit, unit.kind == .currency {
+                if let existing = aggregateCurrencyUnit {
+                    if existing != unit {
+                        mixedCurrencies = true
+                    }
+                } else {
+                    aggregateCurrencyUnit = unit
+                }
+            }
         }
         
         guard count > 0 else {
@@ -263,8 +306,10 @@ public final class ExpressionEngine {
             return (sum: zero, avg: zero, sumDecimal: Decimal(0))
         }
         
-        let sumValue = Value.quantity(.scalar(sumDecimal))
-        let avgValue = Value.quantity(.scalar(sumDecimal / Decimal(count)))
+        let unitForAggregates: Unit? = mixedCurrencies ? nil : aggregateCurrencyUnit
+        
+        let sumValue = Value.quantity(Quantity(magnitude: sumDecimal, unit: unitForAggregates))
+        let avgValue = Value.quantity(Quantity(magnitude: sumDecimal / Decimal(count), unit: unitForAggregates))
         return (sum: sumValue, avg: avgValue, sumDecimal: sumDecimal)
     }
     
