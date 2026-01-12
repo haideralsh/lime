@@ -81,7 +81,6 @@ public final class Lexer {
                 numberString.append(char)
                 advance()
             } else if char == "," {
-                // Allow commas as thousand separators (skip them in the number string)
                 advance()
             } else if char == "." && !hasDecimalPoint {
                 hasDecimalPoint = true

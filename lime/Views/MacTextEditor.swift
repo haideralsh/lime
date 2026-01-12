@@ -22,7 +22,6 @@ struct MacTextEditor: NSViewRepresentable {
         configureTextView(textView, coordinator: context.coordinator)
         configureScrollView(scrollView, with: textView)
         
-        // Apply initial highlighting
         if let textStorage = textView.textStorage {
             Self.syntaxHighlighter.highlight(textStorage)
         }
@@ -33,16 +32,13 @@ struct MacTextEditor: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         if textView.string != text {
-            // Preserve selection
             let selectedRanges = textView.selectedRanges
             textView.string = text
             
-            // Apply syntax highlighting after external text change
             if let textStorage = textView.textStorage {
                 Self.syntaxHighlighter.highlight(textStorage)
             }
             
-            // Restore selection if valid
             textView.selectedRanges = selectedRanges
         }
     }
@@ -102,7 +98,6 @@ struct MacTextEditor: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             
-            // Apply syntax highlighting on every text change
             if let textStorage = textView.textStorage {
                 MacTextEditor.syntaxHighlighter.highlight(textStorage)
             }

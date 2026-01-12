@@ -86,7 +86,6 @@ public final class Parser {
     }
     
     public func parseLine() throws -> Statement? {
-        // Skip any comment tokens
         while case .comment = currentToken.kind {
             advance()
         }
@@ -98,7 +97,6 @@ public final class Parser {
         if let (name, nameRange, tokenCount) = collectIdentifierSequence() {
             let afterIdentifiers = index + tokenCount
             if afterIdentifiers < tokens.count, case .equal = tokens[afterIdentifiers].kind {
-                // Advance past all identifier tokens and the '='
                 for _ in 0..<tokenCount {
                     advance()
                 }
