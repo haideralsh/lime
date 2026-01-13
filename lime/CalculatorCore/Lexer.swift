@@ -56,7 +56,7 @@ public final class Lexer {
         switch char {
         case "+": return Token(kind: .plus, range: range)
         case "-": return Token(kind: .minus, range: range)
-        case "*": return Token(kind: .star, range: range)
+        case "*", "×": return Token(kind: .star, range: range)
         case "/": return Token(kind: .slash, range: range)
         case "=":
             if let aggKind = lexAggregateAfterEqual() {

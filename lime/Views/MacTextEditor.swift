@@ -98,6 +98,14 @@ struct MacTextEditor: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             
+            let currentString = textView.string
+            if currentString.contains("*") {
+                let selectedRanges = textView.selectedRanges
+                let newString = currentString.replacingOccurrences(of: "*", with: "×")
+                textView.string = newString
+                textView.selectedRanges = selectedRanges
+            }
+            
             if let textStorage = textView.textStorage {
                 MacTextEditor.syntaxHighlighter.highlight(textStorage)
             }
