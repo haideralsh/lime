@@ -88,7 +88,7 @@ final class SyntaxHighlighter {
             // Only highlight identifiers as variables if they are part of an assignment
             // (i.e., followed eventually by an equals sign, with only other identifiers in between)
             return isPartOfAssignment(tokens: tokens, identifierIndex: currentIndex) ? SyntaxColors.identifier : defaultColor
-        case .plus, .minus, .star, .slash:
+        case .plus, .minus, .star, .slash, .caret:
             return SyntaxColors.operator
         case .equal:
             return SyntaxColors.equals

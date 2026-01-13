@@ -58,6 +58,7 @@ public final class Lexer {
         case "-": return Token(kind: .minus, range: range)
         case "*", "×": return Token(kind: .star, range: range)
         case "/": return Token(kind: .slash, range: range)
+        case "^": return Token(kind: .caret, range: range)
         case "=":
             if let aggKind = lexAggregateAfterEqual() {
                 let aggRange = NSRange(location: startOffset, length: utf16Offset - startOffset)

@@ -7,6 +7,7 @@ public enum TokenKind: Equatable {
     case minus
     case star
     case slash
+    case caret
     case equal
     case leftParen
     case rightParen

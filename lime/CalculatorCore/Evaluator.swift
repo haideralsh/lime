@@ -85,6 +85,8 @@ public final class Evaluator {
                 resultQuantity = try multiply(lq, rq, range: b.range)
             case .divide:
                 resultQuantity = try divide(lq, rq, range: b.range)
+            case .power:
+                resultQuantity = try power(lq, rq, range: b.range)
             }
             return .quantity(resultQuantity)
             
@@ -204,5 +206,28 @@ public final class Evaluator {
         }
         
         throw EvalError.typeMismatch("Unsupported unit division", range: range)
+    }
+    
+    private func power(_ lhs: Quantity, _ rhs: Quantity, range: NSRange?) throws -> Quantity {
+        guard rhs.unit == nil else {
+            throw EvalError.typeMismatch("Exponent cannot have a unit", range: range)
+        }
+        
+        let base = NSDecimalNumber(decimal: lhs.magnitude).doubleValue
+        
+        let exponent = NSDecimalNumber(decimal: rhs.magnitude).doubleValue
+        let result = pow(base, exponent)
+        
+        guard result.isFinite else {
+            throw EvalError.typeMismatch("Power result is not a valid number", range: range)
+        }
+        
+        let resultDecimal = Decimal(result)
+        
+        if lhs.unit?.kind == .currency {
+            return Quantity(magnitude: resultDecimal, unit: lhs.unit)
+        }
+        
+        return Quantity(magnitude: resultDecimal, unit: nil)
     }
 }

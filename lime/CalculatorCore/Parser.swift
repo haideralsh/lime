@@ -143,7 +143,7 @@ public final class Parser {
     }
     
     private func parseMultiplicative() throws -> Expr {
-        var left = try parseUnary()
+        var left = try parseExponentiation()
         
         while true {
             let op: BinaryOp
@@ -157,13 +157,30 @@ public final class Parser {
             }
             
             advance()
-            let right = try parseUnary()
+            let right = try parseExponentiation()
             let range = NSRange(
                 location: exprRange(left).location,
                 length: exprRange(right).location + exprRange(right).length - exprRange(left).location
             )
             left = BinaryExpr(op: op, left: left, right: right, range: range)
         }
+    }
+    
+    private func parseExponentiation() throws -> Expr {
+        let left = try parseUnary()
+        
+        // Exponentiation is right-associative
+        if case .caret = currentToken.kind {
+            advance()
+            let right = try parseExponentiation()
+            let range = NSRange(
+                location: exprRange(left).location,
+                length: exprRange(right).location + exprRange(right).length - exprRange(left).location
+            )
+            return BinaryExpr(op: .power, left: left, right: right, range: range)
+        }
+        
+        return left
     }
     
     private func parseUnary() throws -> Expr {
