@@ -1,7 +1,8 @@
 import SwiftUI
+import AppKit
 
 struct ResultsSidebar: View {
-    private enum Layout {
+    fileprivate enum Layout {
         static let fontSize: CGFloat = 24
         static let lineHeight: CGFloat = 29.25
         static let topPadding: CGFloat = 40
@@ -15,7 +16,7 @@ struct ResultsSidebar: View {
             ScrollView {
                 VStack(alignment: .trailing, spacing: 0) {
                     ForEach(Array(lineResults.enumerated()), id: \.offset) { index, result in
-                        resultRow(for: result)
+                        ResultRow(displayString: result.displayString)
                             .frame(height: Layout.lineHeight)
                     }
                 }
@@ -26,18 +27,50 @@ struct ResultsSidebar: View {
         }
         .background(Color(red: 0x18/255.0, green: 0x19/255.0, blue: 0x17/255.0))
     }
+}
+
+private struct ResultRow: View {
+    let displayString: String?
     
-    @ViewBuilder
-    private func resultRow(for result: LineResult) -> some View {
+    @State private var isHovering = false
+    
+    var body: some View {
         HStack {
             Spacer()
             
-            if let displayString = result.displayString {
+            if let displayString {
                 Text(displayString)
-                    .font(.system(size: Layout.fontSize, weight: .regular, design: .monospaced))
+                    .font(.system(size: ResultsSidebar.Layout.fontSize, weight: .regular, design: .monospaced))
                     .foregroundColor(.white.opacity(0.7))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(backgroundColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        isHovering = hovering
+                        if hovering {
+                            NSCursor.pointingHand.push()
+                        } else {
+                            NSCursor.pop()
+                        }
+                    }
+                    .onTapGesture {
+                        copyToPasteboard(displayString)
+                    }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+    
+    private var backgroundColor: Color {
+        isHovering && displayString != nil ? Color.white.opacity(0.05) : .clear
+    }
+    
+    private func copyToPasteboard(_ string: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(string, forType: .string)
     }
 }
 
