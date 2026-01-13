@@ -118,6 +118,9 @@ public final class Evaluator {
             case .avg:
                 key = BuiltinAggregateName.avg
                 displayName = "=avg"
+            case .average:
+                key = BuiltinAggregateName.avg
+                displayName = "=average"
             case .prev:
                 key = BuiltinAggregateName.prev
                 displayName = "=prev"

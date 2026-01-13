@@ -87,6 +87,7 @@ public struct BuiltinAggregateExpr: Expr {
         case sum
         case total
         case avg
+        case average
         case prev
     }
     

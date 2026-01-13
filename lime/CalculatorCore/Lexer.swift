@@ -195,6 +195,17 @@ public final class Lexer {
             return .avgAggregate
         }
         
+        if peek(offset: 0) == "a", peek(offset: 1) == "v", peek(offset: 2) == "e", peek(offset: 3) == "r", peek(offset: 4) == "a", peek(offset: 5) == "g", peek(offset: 6) == "e", !isIdentChar(peek(offset: 7)) {
+            advance()
+            advance()
+            advance()
+            advance()
+            advance()
+            advance()
+            advance()
+            return .averageAggregate
+        }
+        
         if peek(offset: 0) == "p", peek(offset: 1) == "r", peek(offset: 2) == "e", peek(offset: 3) == "v", !isIdentChar(peek(offset: 4)) {
             advance()
             advance()

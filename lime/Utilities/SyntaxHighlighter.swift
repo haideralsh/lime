@@ -96,7 +96,7 @@ final class SyntaxHighlighter {
             return SyntaxColors.parenthesis
         case .comment:
             return SyntaxColors.comment
-        case .sumAggregate, .totalAggregate, .avgAggregate, .prevAggregate:
+        case .sumAggregate, .totalAggregate, .avgAggregate, .averageAggregate, .prevAggregate:
             return SyntaxColors.identifier
         case .eof:
             return defaultColor
