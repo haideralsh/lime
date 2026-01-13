@@ -7,6 +7,7 @@ public enum BinaryOp {
     case subtract
     case multiply
     case divide
+    case modulo
     case power
 }
 

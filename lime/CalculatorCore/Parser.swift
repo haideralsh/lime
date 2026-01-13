@@ -152,6 +152,8 @@ public final class Parser {
                 op = .multiply
             case .slash:
                 op = .divide
+            case .mod:
+                op = .modulo
             default:
                 return left
             }

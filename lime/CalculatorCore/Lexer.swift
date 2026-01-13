@@ -111,16 +111,19 @@ public final class Lexer {
         }
         
         let range = NSRange(location: startOffset, length: utf16Offset - startOffset)
+        
+        if identifier.lowercased() == "mod" {
+            return Token(kind: .mod, range: range)
+        }
+        
         return Token(kind: .identifier(identifier), range: range)
     }
     
     private func lexComment(startOffset: Int) -> Token {
         var commentString = ""
         
-        // Skip the '#' character
         advance()
         
-        // Consume all characters until end of line or end of source
         while currentIndex < source.endIndex {
             let char = source[currentIndex]
             if char == "\n" || char == "\r" {

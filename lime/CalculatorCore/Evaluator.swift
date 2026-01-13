@@ -85,6 +85,8 @@ public final class Evaluator {
                 resultQuantity = try multiply(lq, rq, range: b.range)
             case .divide:
                 resultQuantity = try divide(lq, rq, range: b.range)
+            case .modulo:
+                resultQuantity = try modulo(lq, rq, range: b.range)
             case .power:
                 resultQuantity = try power(lq, rq, range: b.range)
             }
@@ -209,6 +211,31 @@ public final class Evaluator {
         }
         
         throw EvalError.typeMismatch("Unsupported unit division", range: range)
+    }
+    
+    private func modulo(_ lhs: Quantity, _ rhs: Quantity, range: NSRange?) throws -> Quantity {
+        if rhs.magnitude == 0 {
+            throw EvalError.divisionByZero(range: range)
+        }
+        
+        let lu = lhs.unit
+        let ru = rhs.unit
+        
+        
+        guard lu == nil && ru == nil else {
+            throw EvalError.typeMismatch("Modulo operation only supported for unitless values", range: range)
+        }
+        
+        let lhsDouble = NSDecimalNumber(decimal: lhs.magnitude).doubleValue
+        let rhsDouble = NSDecimalNumber(decimal: rhs.magnitude).doubleValue
+        
+        let remainder = lhsDouble.truncatingRemainder(dividingBy: rhsDouble)
+        
+        guard remainder.isFinite else {
+            throw EvalError.typeMismatch("Modulo result is not a valid number", range: range)
+        }
+        
+        return Quantity.scalar(Decimal(remainder))
     }
     
     private func power(_ lhs: Quantity, _ rhs: Quantity, range: NSRange?) throws -> Quantity {

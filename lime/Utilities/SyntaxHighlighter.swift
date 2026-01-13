@@ -28,17 +28,14 @@ final class SyntaxHighlighter {
         let fullRange = NSRange(location: 0, length: textStorage.length)
         let source = textStorage.string
         
-        // Begin editing batch
         textStorage.beginEditing()
         
-        // Apply default attributes first
         let defaultAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: defaultColor
         ]
         textStorage.setAttributes(defaultAttributes, range: fullRange)
         
-        // Tokenize and apply colors
         applyTokenColors(to: textStorage, source: source)
         
         textStorage.endEditing()
@@ -73,7 +70,6 @@ final class SyntaxHighlighter {
                 }
             }
             
-            // Move to next line (+1 for newline character, except for last line)
             lineStartOffset += lineLength + 1
         }
     }
@@ -85,10 +81,8 @@ final class SyntaxHighlighter {
         case .currencySymbol:
             return SyntaxColors.number
         case .identifier:
-            // Only highlight identifiers as variables if they are part of an assignment
-            // (i.e., followed eventually by an equals sign, with only other identifiers in between)
             return isPartOfAssignment(tokens: tokens, identifierIndex: currentIndex) ? SyntaxColors.identifier : defaultColor
-        case .plus, .minus, .star, .slash, .caret:
+        case .plus, .minus, .star, .slash, .mod, .caret:
             return SyntaxColors.operator
         case .equal:
             return SyntaxColors.equals
@@ -111,13 +105,10 @@ final class SyntaxHighlighter {
         for i in (identifierIndex + 1)..<tokens.count {
             switch tokens[i].kind {
             case .identifier:
-                // Continue looking - could be a multi-word variable name
                 continue
             case .equal:
-                // Found equals sign - this identifier is part of an assignment
                 return true
             default:
-                // Found something else - this is not an assignment
                 return false
             }
         }
