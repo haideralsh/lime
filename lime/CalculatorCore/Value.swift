@@ -5,6 +5,7 @@ public enum UnitKind {
     case length
     case mass
     case currency
+    case percent
 }
 
 public struct Unit: Equatable {
@@ -22,6 +23,7 @@ public struct Unit: Equatable {
     public static let eur = Unit(name: "€", kind: .currency)
     public static let gbp = Unit(name: "£", kind: .currency)
     public static let jpy = Unit(name: "¥", kind: .currency)
+    public static let percent = Unit(name: "%", kind: .percent)
     
     public static func currency(forSymbol symbol: String) -> Unit? {
         switch symbol {
@@ -72,6 +74,8 @@ public enum Value: Equatable {
             if let unit = q.unit {
                 if unit.kind == .currency {
                     return "\(unit.name)\(formatted)"
+                } else if unit.kind == .percent {
+                    return "\(formatted)%"
                 } else {
                     return "\(formatted) \(unit.name)"
                 }

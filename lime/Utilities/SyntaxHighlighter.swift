@@ -60,7 +60,6 @@ final class SyntaxHighlighter {
                             length: token.range.length
                         )
                         
-                        // Ensure range is valid
                         if absoluteRange.location + absoluteRange.length <= textStorage.length {
                             textStorage.addAttribute(.foregroundColor, value: color, range: absoluteRange)
                         }
@@ -78,9 +77,13 @@ final class SyntaxHighlighter {
         switch tokenKind {
         case .number:
             return SyntaxColors.number
-        case .currencySymbol:
+        case .currencySymbol, .percent:
             return SyntaxColors.number
-        case .identifier:
+        case .identifier(let name):
+            let lower = name.lowercased()
+            if lower == "of" || lower == "on" || lower == "off" {
+                return SyntaxColors.operator
+            }
             return isPartOfAssignment(tokens: tokens, identifierIndex: currentIndex) ? SyntaxColors.identifier : defaultColor
         case .plus, .minus, .star, .slash, .mod, .caret:
             return SyntaxColors.operator

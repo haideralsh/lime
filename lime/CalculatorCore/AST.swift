@@ -83,6 +83,47 @@ public struct ParenExpr: Expr {
     }
 }
 
+public struct PercentExpr: Expr {
+    public let operand: Expr
+    public let range: NSRange
+    
+    public init(operand: Expr, range: NSRange) {
+        self.operand = operand
+        self.range = range
+    }
+}
+
+public struct PercentOfExpr: Expr {
+    public let percent: Expr
+    public let base: Expr
+    public let range: NSRange
+    
+    public init(percent: Expr, base: Expr, range: NSRange) {
+        self.percent = percent
+        self.base = base
+        self.range = range
+    }
+}
+
+public enum PercentAdjustKind {
+    case on
+    case off
+}
+
+public struct PercentAdjustExpr: Expr {
+    public let kind: PercentAdjustKind
+    public let percent: Expr
+    public let base: Expr
+    public let range: NSRange
+    
+    public init(kind: PercentAdjustKind, percent: Expr, base: Expr, range: NSRange) {
+        self.kind = kind
+        self.percent = percent
+        self.base = base
+        self.range = range
+    }
+}
+
 public struct BuiltinAggregateExpr: Expr {
     public enum Kind {
         case sum

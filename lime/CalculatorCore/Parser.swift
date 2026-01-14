@@ -122,12 +122,28 @@ public final class Parser {
         var left = try parseMultiplicative()
         
         while true {
-            let op: BinaryOp
+            if case .identifier(let ident) = currentToken.kind {
+                let lower = ident.lowercased()
+                if lower == "on" || lower == "off" {
+                    let kind: PercentAdjustKind = lower == "on" ? .on : .off
+                    advance()
+                    let right = try parseMultiplicative()
+                    let range = NSRange(
+                        location: exprRange(left).location,
+                        length: exprRange(right).location + exprRange(right).length - exprRange(left).location
+                    )
+                    
+                    left = PercentAdjustExpr(kind: kind, percent: left, base: right, range: range)
+                    continue
+                }
+            }
+            
+            let isAdd: Bool
             switch currentToken.kind {
             case .plus:
-                op = .add
+                isAdd = true
             case .minus:
-                op = .subtract
+                isAdd = false
             default:
                 return left
             }
@@ -138,7 +154,14 @@ public final class Parser {
                 location: exprRange(left).location,
                 length: exprRange(right).location + exprRange(right).length - exprRange(left).location
             )
-            left = BinaryExpr(op: op, left: left, right: right, range: range)
+            
+            if right is PercentExpr {
+                let kind: PercentAdjustKind = isAdd ? .on : .off
+                left = PercentAdjustExpr(kind: kind, percent: right, base: left, range: range)
+            } else {
+                let op: BinaryOp = isAdd ? .add : .subtract
+                left = BinaryExpr(op: op, left: left, right: right, range: range)
+            }
         }
     }
     
@@ -146,6 +169,17 @@ public final class Parser {
         var left = try parseExponentiation()
         
         while true {
+            if case .identifier(let ident) = currentToken.kind, ident.lowercased() == "of" {
+                advance()
+                let right = try parseExponentiation()
+                let range = NSRange(
+                    location: exprRange(left).location,
+                    length: exprRange(right).location + exprRange(right).length - exprRange(left).location
+                )
+                left = PercentOfExpr(percent: left, base: right, range: range)
+                continue
+            }
+            
             let op: BinaryOp
             switch currentToken.kind {
             case .star:
@@ -164,7 +198,12 @@ public final class Parser {
                 location: exprRange(left).location,
                 length: exprRange(right).location + exprRange(right).length - exprRange(left).location
             )
-            left = BinaryExpr(op: op, left: left, right: right, range: range)
+            
+            if op == .multiply && right is PercentExpr {
+                left = PercentOfExpr(percent: right, base: left, range: range)
+            } else {
+                left = BinaryExpr(op: op, left: left, right: right, range: range)
+            }
         }
     }
     
@@ -197,7 +236,23 @@ public final class Parser {
             return UnaryExpr(op: .negate, operand: operand, range: range)
         }
         
-        return try parsePrimary()
+        return try parsePostfix()
+    }
+    
+    private func parsePostfix() throws -> Expr {
+        var expr = try parsePrimary()
+        
+        while case .percent = currentToken.kind {
+            let percentToken = currentToken
+            advance()
+            let range = NSRange(
+                location: exprRange(expr).location,
+                length: percentToken.range.location + percentToken.range.length - exprRange(expr).location
+            )
+            expr = PercentExpr(operand: expr, range: range)
+        }
+        
+        return expr
     }
     
     private func parsePrimary() throws -> Expr {
@@ -291,6 +346,9 @@ public final class Parser {
         case let e as UnaryExpr: return e.range
         case let e as ParenExpr: return e.range
         case let e as BuiltinAggregateExpr: return e.range
+        case let e as PercentExpr: return e.range
+        case let e as PercentOfExpr: return e.range
+        case let e as PercentAdjustExpr: return e.range
         default: return NSRange(location: 0, length: 0)
         }
     }

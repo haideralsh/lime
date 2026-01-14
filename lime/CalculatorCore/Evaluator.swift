@@ -132,6 +132,61 @@ public final class Evaluator {
             }
             return value
             
+        case let pct as PercentExpr:
+            let operandVal = try eval(pct.operand)
+            guard case .quantity(let q) = operandVal else {
+                throw EvalError.typeMismatch("Cannot apply % to non-numeric value", range: pct.range)
+            }
+            return .quantity(Quantity(magnitude: q.magnitude, unit: .percent))
+            
+        case let pctOf as PercentOfExpr:
+            let percentVal = try eval(pctOf.percent)
+            let baseVal = try eval(pctOf.base)
+            
+            guard case .quantity(let pq) = percentVal else {
+                throw EvalError.typeMismatch("Left side of 'of' must be a percent value", range: pctOf.range)
+            }
+            guard case .quantity(let bq) = baseVal else {
+                throw EvalError.typeMismatch("Right side of 'of' must be a numeric value", range: pctOf.range)
+            }
+            
+            guard pq.unit?.kind == .percent else {
+                throw EvalError.typeMismatch("Left side of 'of' must be a percent value", range: pctOf.range)
+            }
+            
+            let ratio = pq.magnitude / 100
+            let resultMagnitude = ratio * bq.magnitude
+            
+            return .quantity(Quantity(magnitude: resultMagnitude, unit: bq.unit))
+            
+        case let pctAdj as PercentAdjustExpr:
+            let percentVal = try eval(pctAdj.percent)
+            let baseVal = try eval(pctAdj.base)
+            
+            guard case .quantity(let pq) = percentVal else {
+                throw EvalError.typeMismatch("Percent value must be numeric", range: pctAdj.range)
+            }
+            guard case .quantity(let bq) = baseVal else {
+                throw EvalError.typeMismatch("Base value must be numeric", range: pctAdj.range)
+            }
+            
+            guard pq.unit?.kind == .percent else {
+                throw EvalError.typeMismatch("Percent value must have % suffix", range: pctAdj.range)
+            }
+            
+            let ratio = pq.magnitude / 100
+            let adjustment = ratio * bq.magnitude
+            
+            let resultMagnitude: Decimal
+            switch pctAdj.kind {
+            case .on:
+                resultMagnitude = bq.magnitude + adjustment
+            case .off:
+                resultMagnitude = bq.magnitude - adjustment
+            }
+            
+            return .quantity(Quantity(magnitude: resultMagnitude, unit: bq.unit))
+            
         default:
             throw EvalError.typeMismatch("Unknown expression type", range: nil)
         }
