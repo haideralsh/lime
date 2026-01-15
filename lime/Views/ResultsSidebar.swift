@@ -4,7 +4,7 @@ import AppKit
 struct ResultsSidebar: View {
     fileprivate enum Layout {
         static let fontSize: CGFloat = 24
-        static let lineHeight: CGFloat = 29.25
+        static let lineHeight: CGFloat = 32
         static let topPadding: CGFloat = 40
         static let horizontalPadding: CGFloat = 16
     }

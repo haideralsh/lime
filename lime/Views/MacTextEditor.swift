@@ -4,6 +4,7 @@ import AppKit
 struct MacTextEditor: NSViewRepresentable {
     private enum Layout {
         static let fontSize: CGFloat = 24
+        static let lineHeight: CGFloat = 32
         static let textContainerInset = NSSize(width: 40, height: 40)
     }
     
@@ -11,7 +12,8 @@ struct MacTextEditor: NSViewRepresentable {
     
     private static let syntaxHighlighter = SyntaxHighlighter(
         font: NSFont.monospacedSystemFont(ofSize: Layout.fontSize, weight: .regular),
-        defaultColor: SyntaxColors.defaultText
+        defaultColor: SyntaxColors.defaultText,
+        lineHeight: Layout.lineHeight
     )
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -75,6 +77,11 @@ struct MacTextEditor: NSViewRepresentable {
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.delegate = coordinator
+        
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.minimumLineHeight = Layout.lineHeight
+        paragraphStyle.maximumLineHeight = Layout.lineHeight
+        textView.defaultParagraphStyle = paragraphStyle
     }
     
     private func configureScrollView(_ scrollView: NSScrollView, with textView: NSTextView) {

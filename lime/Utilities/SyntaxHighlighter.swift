@@ -17,10 +17,18 @@ enum SyntaxColors {
 final class SyntaxHighlighter {
     private let font: NSFont
     private let defaultColor: NSColor
+    private let paragraphStyle: NSParagraphStyle
     
-    init(font: NSFont, defaultColor: NSColor = SyntaxColors.defaultText) {
+    init(font: NSFont, defaultColor: NSColor = SyntaxColors.defaultText, lineHeight: CGFloat? = nil) {
         self.font = font
         self.defaultColor = defaultColor
+        
+        let style = NSMutableParagraphStyle()
+        if let lineHeight = lineHeight {
+            style.minimumLineHeight = lineHeight
+            style.maximumLineHeight = lineHeight
+        }
+        self.paragraphStyle = style
     }
     
     /// Highlights the entire text storage by tokenizing each line.
@@ -32,7 +40,8 @@ final class SyntaxHighlighter {
         
         let defaultAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: defaultColor
+            .foregroundColor: defaultColor,
+            .paragraphStyle: paragraphStyle
         ]
         textStorage.setAttributes(defaultAttributes, range: fullRange)
         
