@@ -8,13 +8,19 @@ struct ContentView: View {
     }
     
     @StateObject private var viewModel = DocumentViewModel()
+    @State private var copiedMessage: String?
     
     var body: some View {
         HSplitView {
             MacTextEditor(text: $viewModel.text)
                 .frame(minWidth: Layout.editorMinWidth)
             
-            ResultsSidebar(lineResults: viewModel.lineResults)
+            ResultsSidebar(lineResults: viewModel.lineResults, onCopy: {
+                copiedMessage = "Copied result to clipboard"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    copiedMessage = nil
+                }
+            })
                 .frame(minWidth: Layout.sidebarMinWidth)
                 .frame(maxWidth: Layout.sidebarMaxWidth, maxHeight: .infinity)
                 .overlay(
@@ -25,7 +31,19 @@ struct ContentView: View {
                 )
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            StatusBar(sum: viewModel.sum)
+            StatusBar(sum: viewModel.sum, copiedMessage: copiedMessage, onTotalTap: {
+                let formatter = NumberFormatter()
+                formatter.numberStyle = .decimal
+                formatter.maximumFractionDigits = 10
+                formatter.minimumFractionDigits = 0
+                let formattedTotal = formatter.string(from: NSDecimalNumber(decimal: viewModel.sum)) ?? "\(viewModel.sum)"
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(formattedTotal, forType: .string)
+                copiedMessage = "Copied to clipboard"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    copiedMessage = nil
+                }
+            })
         }
         .background(Color.black)
         .background(WindowTabConfigurator())

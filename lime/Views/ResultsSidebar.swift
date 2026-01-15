@@ -10,13 +10,14 @@ struct ResultsSidebar: View {
     }
     
     let lineResults: [LineResult]
+    var onCopy: (() -> Void)?
     
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .trailing, spacing: 0) {
                     ForEach(Array(lineResults.enumerated()), id: \.offset) { index, result in
-                        ResultRow(displayString: result.displayString)
+                        ResultRow(displayString: result.displayString, onCopy: onCopy)
                             .frame(height: Layout.lineHeight)
                     }
                 }
@@ -31,6 +32,7 @@ struct ResultsSidebar: View {
 
 private struct ResultRow: View {
     let displayString: String?
+    var onCopy: (() -> Void)?
     
     @State private var isHovering = false
     
@@ -57,6 +59,7 @@ private struct ResultRow: View {
                     }
                     .onTapGesture {
                         copyToPasteboard(displayString)
+                        onCopy?()
                     }
             }
         }

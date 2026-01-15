@@ -8,6 +8,8 @@ struct StatusBar: View {
     }
     
     let sum: Decimal
+    let copiedMessage: String?
+    var onTotalTap: (() -> Void)? = nil
     
     private var formattedTotal: String {
         let formatter = NumberFormatter()
@@ -19,10 +21,18 @@ struct StatusBar: View {
     
     var body: some View {
         HStack {
+            if let copiedMessage {
+                Text(copiedMessage)
+                    .font(.system(size: Layout.fontSize, weight: .regular, design: .default))
+                    .foregroundColor(.secondary)
+            }
             Spacer()
             Text("Total: \(formattedTotal)")
                 .font(.system(size: Layout.fontSize, weight: .regular, design: .default))
                 .foregroundColor(.secondary)
+                .onTapGesture {
+                    onTotalTap?()
+                }
         }
         .padding(.horizontal, Layout.horizontalPadding)
         .frame(height: Layout.height)
@@ -32,6 +42,6 @@ struct StatusBar: View {
 }
 
 #Preview {
-    StatusBar(sum: Decimal(165.456))
+    StatusBar(sum: Decimal(165.456), copiedMessage: "Copied to clipboard", onTotalTap: {})
     .frame(width: 400)
 }
