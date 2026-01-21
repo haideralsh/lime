@@ -33,6 +33,12 @@ struct MacTextEditor: NSViewRepresentable {
     
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
+        
+        textView.backgroundColor = LimeTheme.backgroundNS
+        scrollView.backgroundColor = LimeTheme.backgroundNS
+        textView.textColor = .labelColor
+        textView.insertionPointColor = .labelColor
+        
         if textView.string != text {
             let selectedRanges = textView.selectedRanges
             textView.string = text
@@ -42,6 +48,10 @@ struct MacTextEditor: NSViewRepresentable {
             }
             
             textView.selectedRanges = selectedRanges
+        } else {
+            if let textStorage = textView.textStorage {
+                Self.syntaxHighlighter.highlight(textStorage)
+            }
         }
     }
     
@@ -70,9 +80,9 @@ struct MacTextEditor: NSViewRepresentable {
         textView.isEditable = true
         textView.isSelectable = true
         textView.drawsBackground = true
-        textView.backgroundColor = NSColor(red: 0x18/255.0, green: 0x19/255.0, blue: 0x17/255.0, alpha: 1.0)
-        textView.textColor = .textColor
-        textView.insertionPointColor = .textColor
+        textView.backgroundColor = LimeTheme.backgroundNS
+        textView.textColor = .labelColor
+        textView.insertionPointColor = .labelColor
         textView.autoresizingMask = [.width, .height]
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
@@ -91,7 +101,7 @@ struct MacTextEditor: NSViewRepresentable {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
         scrollView.drawsBackground = true
-        scrollView.backgroundColor = NSColor(red: 0x18/255.0, green: 0x19/255.0, blue: 0x17/255.0, alpha: 1.0)
+        scrollView.backgroundColor = LimeTheme.backgroundNS
         textView.frame = scrollView.contentView.bounds
     }
     

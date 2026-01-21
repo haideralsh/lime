@@ -26,7 +26,7 @@ struct ResultsSidebar: View {
                 .frame(minWidth: geometry.size.width, alignment: .trailing)
             }
         }
-        .background(Color(red: 0x18/255.0, green: 0x19/255.0, blue: 0x17/255.0))
+        .background(LimeTheme.background)
     }
 }
 
@@ -43,7 +43,7 @@ private struct ResultRow: View {
             if let displayString {
                 Text(displayString)
                     .font(.system(size: ResultsSidebar.Layout.fontSize, weight: .regular, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(LimeTheme.sidebarText)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(backgroundColor)
@@ -67,7 +67,7 @@ private struct ResultRow: View {
     }
     
     private var backgroundColor: Color {
-        isHovering && displayString != nil ? Color.white.opacity(0.05) : .clear
+        isHovering && displayString != nil ? LimeTheme.rowHover : .clear
     }
     
     private func copyToPasteboard(_ string: String) {

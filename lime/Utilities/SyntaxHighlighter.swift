@@ -8,9 +8,9 @@ enum SyntaxColors {
     static let identifier = NSColor.systemCyan
     static let `operator` = NSColor.systemPink
     static let parenthesis = NSColor.systemYellow
-    static let equals = NSColor.systemGray
-    static let comment = NSColor.systemGray
-    static let defaultText = NSColor.white
+    static let equals = NSColor.secondaryLabelColor
+    static let comment = NSColor.secondaryLabelColor
+    static let defaultText = NSColor.labelColor
 }
 
 /// Applies syntax highlighting to an NSTextStorage using the expression Lexer.

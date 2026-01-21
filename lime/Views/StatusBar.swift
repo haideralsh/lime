@@ -37,7 +37,7 @@ struct StatusBar: View {
         .padding(.horizontal, Layout.horizontalPadding)
         .frame(height: Layout.height)
         .frame(maxWidth: .infinity)
-        .background(Color(white: 0.2))
+        .background(LimeTheme.statusBarBackground)
     }
 }
 

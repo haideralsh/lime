@@ -25,7 +25,7 @@ struct ContentView: View {
                 .frame(maxWidth: Layout.sidebarMaxWidth, maxHeight: .infinity)
                 .overlay(
                     Rectangle()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(LimeTheme.divider)
                         .frame(width: 1),
                     alignment: .leading
                 )
@@ -45,7 +45,7 @@ struct ContentView: View {
                 }
             })
         }
-        .background(Color.black)
+        .background(LimeTheme.background)
         .background(WindowTabConfigurator())
     }
 }
