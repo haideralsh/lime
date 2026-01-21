@@ -142,6 +142,14 @@ public struct BuiltinAggregateExpr: Expr {
     }
 }
 
+public struct SubtotalExpr: Expr {
+    public let range: NSRange
+    
+    public init(range: NSRange) {
+        self.range = range
+    }
+}
+
 public struct AssignmentStmt {
     public let name: String
     public let nameRange: NSRange

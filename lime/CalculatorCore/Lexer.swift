@@ -218,6 +218,11 @@ public final class Lexer {
             return .prevAggregate
         }
         
+        if peek(offset: 0) == "s", peek(offset: 1) == "u", peek(offset: 2) == "b", peek(offset: 3) == "t", peek(offset: 4) == "o", peek(offset: 5) == "t", peek(offset: 6) == "a", peek(offset: 7) == "l", !isIdentChar(peek(offset: 8)) {
+            for _ in 0..<8 { advance() }
+            return .subtotalAggregate
+        }
+        
         return nil
     }
 }

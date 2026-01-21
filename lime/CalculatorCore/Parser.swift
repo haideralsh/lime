@@ -312,6 +312,10 @@ public final class Parser {
             advance()
             return BuiltinAggregateExpr(kind: .prev, range: token.range)
             
+        case .subtotalAggregate:
+            advance()
+            return SubtotalExpr(range: token.range)
+            
         case .leftParen:
             let leftParen = token
             advance()
@@ -349,6 +353,7 @@ public final class Parser {
         case let e as PercentExpr: return e.range
         case let e as PercentOfExpr: return e.range
         case let e as PercentAdjustExpr: return e.range
+        case let e as SubtotalExpr: return e.range
         default: return NSRange(location: 0, length: 0)
         }
     }

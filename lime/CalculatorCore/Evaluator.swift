@@ -4,6 +4,7 @@ public enum BuiltinAggregateName {
     public static let sum = "=sum"
     public static let avg = "=avg"
     public static let prev = "=prev"
+    public static let subtotal = "=subtotal"
 }
 
 public enum EvalError: Error, LocalizedError {
@@ -129,6 +130,12 @@ public final class Evaluator {
             }
             guard let value = environment[key] else {
                 throw EvalError.undefinedVariable(displayName, range: a.range)
+            }
+            return value
+            
+        case let s as SubtotalExpr:
+            guard let value = environment[BuiltinAggregateName.subtotal] else {
+                throw EvalError.undefinedVariable("=subtotal", range: s.range)
             }
             return value
             

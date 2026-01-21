@@ -31,6 +31,7 @@ private struct ParsedLine {
     let line: String
     let statement: Statement?
     let usesAggregate: Bool
+    let usesSubtotal: Bool
     let parseError: Error?
 }
 
@@ -67,6 +68,7 @@ public final class ExpressionEngine {
                     line: line,
                     statement: nil,
                     usesAggregate: false,
+                    usesSubtotal: false,
                     parseError: nil
                 ))
                 continue
@@ -80,12 +82,14 @@ public final class ExpressionEngine {
                 let stmtOpt = try parser.parseLine()
                 if let stmt = stmtOpt {
                     let usesAgg = statementUsesAggregate(stmt)
+                    let usesSub = statementUsesSubtotal(stmt)
                     parsedLines.append(ParsedLine(
                         lineIndex: lineIndex,
                         sourceRange: lineRange,
                         line: line,
                         statement: stmt,
                         usesAggregate: usesAgg,
+                        usesSubtotal: usesSub,
                         parseError: nil
                     ))
                 } else {
@@ -95,6 +99,7 @@ public final class ExpressionEngine {
                         line: line,
                         statement: nil,
                         usesAggregate: false,
+                        usesSubtotal: false,
                         parseError: nil
                     ))
                 }
@@ -105,6 +110,7 @@ public final class ExpressionEngine {
                     line: line,
                     statement: nil,
                     usesAggregate: false,
+                    usesSubtotal: false,
                     parseError: error
                 ))
             }
@@ -134,6 +140,43 @@ public final class ExpressionEngine {
             return exprUsesAggregate(u.operand)
         case let p as ParenExpr:
             return exprUsesAggregate(p.inner)
+        case let pct as PercentExpr:
+            return exprUsesAggregate(pct.operand)
+        case let pctOf as PercentOfExpr:
+            return exprUsesAggregate(pctOf.percent) || exprUsesAggregate(pctOf.base)
+        case let pctAdj as PercentAdjustExpr:
+            return exprUsesAggregate(pctAdj.percent) || exprUsesAggregate(pctAdj.base)
+        default:
+            return false
+        }
+    }
+    
+    private func statementUsesSubtotal(_ stmt: Statement) -> Bool {
+        switch stmt {
+        case .expression(let expr):
+            return exprUsesSubtotal(expr)
+        case .assignment(let assignment):
+            return exprUsesSubtotal(assignment.value)
+        }
+    }
+    
+    private func exprUsesSubtotal(_ expr: Expr) -> Bool {
+        if expr is SubtotalExpr {
+            return true
+        }
+        switch expr {
+        case let b as BinaryExpr:
+            return exprUsesSubtotal(b.left) || exprUsesSubtotal(b.right)
+        case let u as UnaryExpr:
+            return exprUsesSubtotal(u.operand)
+        case let p as ParenExpr:
+            return exprUsesSubtotal(p.inner)
+        case let pct as PercentExpr:
+            return exprUsesSubtotal(pct.operand)
+        case let pctOf as PercentOfExpr:
+            return exprUsesSubtotal(pctOf.percent) || exprUsesSubtotal(pctOf.base)
+        case let pctAdj as PercentAdjustExpr:
+            return exprUsesSubtotal(pctAdj.percent) || exprUsesSubtotal(pctAdj.base)
         default:
             return false
         }
@@ -170,7 +213,7 @@ public final class ExpressionEngine {
                 continue
             }
             
-            if parsed.usesAggregate {
+            if parsed.usesAggregate || parsed.usesSubtotal {
                 results[idx] = LineResult(
                     lineIndex: idx,
                     sourceRange: parsed.sourceRange,
@@ -268,7 +311,68 @@ public final class ExpressionEngine {
             }
         }
         
+        results = evaluateSubtotals(results: results, parsedLines: parsedLines)
+        
         return (lineResults: results, sum: aggregates.sumDecimal)
+    }
+    
+    private func evaluateSubtotals(results: [LineResult], parsedLines: [ParsedLine]) -> [LineResult] {
+        var results = results
+        
+        var segmentSumDecimal: Decimal = 0
+        var segmentCurrencyUnit: Unit? = nil
+        var segmentMixedCurrencies = false
+        
+        for parsed in parsedLines {
+            let idx = parsed.lineIndex
+            
+            if parsed.usesSubtotal {
+                guard let statement = parsed.statement else { continue }
+                
+                let unitForSubtotal: Unit? = segmentMixedCurrencies ? nil : segmentCurrencyUnit
+                let subtotalValue = Value.quantity(Quantity(magnitude: segmentSumDecimal, unit: unitForSubtotal))
+                environment[BuiltinAggregateName.subtotal] = subtotalValue
+                
+                let evaluator = Evaluator(environment: environment)
+                do {
+                    let value = try evaluator.evaluate(statement)
+                    results[idx] = LineResult(
+                        lineIndex: idx,
+                        sourceRange: parsed.sourceRange,
+                        value: value,
+                        error: nil
+                    )
+                } catch {
+                    results[idx] = LineResult(
+                        lineIndex: idx,
+                        sourceRange: parsed.sourceRange,
+                        value: nil,
+                        error: error
+                    )
+                }
+                
+                segmentSumDecimal = 0
+                segmentCurrencyUnit = nil
+                segmentMixedCurrencies = false
+            } else if !parsed.usesAggregate {
+                guard let value = results[idx].value else { continue }
+                guard case .quantity(let q) = value else { continue }
+                
+                segmentSumDecimal += q.magnitude
+                
+                if let unit = q.unit, unit.kind == .currency {
+                    if let existing = segmentCurrencyUnit {
+                        if existing != unit {
+                            segmentMixedCurrencies = true
+                        }
+                    } else {
+                        segmentCurrencyUnit = unit
+                    }
+                }
+            }
+        }
+        
+        return results
     }
     
     private func computeAggregates(
@@ -283,7 +387,7 @@ public final class ExpressionEngine {
         for (i, result) in results.enumerated() {
             let parsed = parsedLines[i]
             
-            if parsed.usesAggregate { continue }
+            if parsed.usesAggregate || parsed.usesSubtotal { continue }
             guard let value = result.value else { continue }
             guard case .quantity(let q) = value else { continue }
             

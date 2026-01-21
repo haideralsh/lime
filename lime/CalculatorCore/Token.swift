@@ -19,6 +19,7 @@ public enum TokenKind: Equatable {
     case avgAggregate
     case averageAggregate
     case prevAggregate
+    case subtotalAggregate
     case currencySymbol(String)
     case eof
 }
