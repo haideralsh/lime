@@ -5,6 +5,10 @@ import AppKit
 struct LimeApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
+    init() {
+        Typography.registerFonts()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

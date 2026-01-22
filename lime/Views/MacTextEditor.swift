@@ -3,18 +3,20 @@ import AppKit
 
 struct MacTextEditor: NSViewRepresentable {
     private enum Layout {
-        static let fontSize: CGFloat = 24
-        static let lineHeight: CGFloat = 32
+        static let fontSize: CGFloat = 18
+        static let lineHeight: CGFloat = 28
         static let textContainerInset = NSSize(width: 40, height: 40)
     }
     
     @Binding var text: String
     
-    private static let syntaxHighlighter = SyntaxHighlighter(
-        font: NSFont.monospacedSystemFont(ofSize: Layout.fontSize, weight: .regular),
-        defaultColor: SyntaxColors.defaultText,
-        lineHeight: Layout.lineHeight
-    )
+    private var syntaxHighlighter: SyntaxHighlighter {
+        SyntaxHighlighter(
+            font: Typography.nsFont(size: Layout.fontSize),
+            defaultColor: SyntaxColors.defaultText,
+            lineHeight: Layout.lineHeight
+        )
+    }
     
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -25,7 +27,7 @@ struct MacTextEditor: NSViewRepresentable {
         configureScrollView(scrollView, with: textView)
         
         if let textStorage = textView.textStorage {
-            Self.syntaxHighlighter.highlight(textStorage)
+            syntaxHighlighter.highlight(textStorage)
         }
         
         return scrollView
@@ -44,13 +46,13 @@ struct MacTextEditor: NSViewRepresentable {
             textView.string = text
             
             if let textStorage = textView.textStorage {
-                Self.syntaxHighlighter.highlight(textStorage)
+                syntaxHighlighter.highlight(textStorage)
             }
             
             textView.selectedRanges = selectedRanges
         } else {
             if let textStorage = textView.textStorage {
-                Self.syntaxHighlighter.highlight(textStorage)
+                syntaxHighlighter.highlight(textStorage)
             }
         }
     }
@@ -76,7 +78,7 @@ struct MacTextEditor: NSViewRepresentable {
         textView.textContainerInset = Layout.textContainerInset
         textView.isRichText = false
         textView.allowsUndo = true
-        textView.font = NSFont.monospacedSystemFont(ofSize: Layout.fontSize, weight: .regular)
+        textView.font = Typography.nsFont(size: Layout.fontSize)
         textView.isEditable = true
         textView.isSelectable = true
         textView.drawsBackground = true
@@ -124,7 +126,7 @@ struct MacTextEditor: NSViewRepresentable {
             }
             
             if let textStorage = textView.textStorage {
-                MacTextEditor.syntaxHighlighter.highlight(textStorage)
+                parent.syntaxHighlighter.highlight(textStorage)
             }
             
             parent.text = textView.string

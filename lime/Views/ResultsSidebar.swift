@@ -3,8 +3,8 @@ import AppKit
 
 struct ResultsSidebar: View {
     fileprivate enum Layout {
-        static let fontSize: CGFloat = 24
-        static let lineHeight: CGFloat = 32
+        static let fontSize: CGFloat = 18
+        static let lineHeight: CGFloat = 28
         static let topPadding: CGFloat = 40
         static let horizontalPadding: CGFloat = 16
     }
@@ -42,7 +42,7 @@ private struct ResultRow: View {
             
             if let displayString {
                 Text(displayString)
-                    .font(.system(size: ResultsSidebar.Layout.fontSize, weight: .regular, design: .monospaced))
+                    .font(Typography.font(size: ResultsSidebar.Layout.fontSize))
                     .foregroundColor(LimeTheme.sidebarText)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
