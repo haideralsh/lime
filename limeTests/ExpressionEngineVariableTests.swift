@@ -46,5 +46,24 @@ struct ExpressionEngineVariableTests {
         #expect(results.lineResults[1].error == nil)
         #expect(results.lineResults[1].value?.asDecimal == 15)
     }
+    
+    @Test func variableWithAggregateUsedInExpression() async throws {
+        let results = evaluate("foo = 100 + 200\nbar = =total × 2\nfoo + bar")
+        
+        #expect(results.lineResults.count == 3)
+        #expect(results.lineResults[0].value?.asDecimal == 300)
+        #expect(results.lineResults[1].value?.asDecimal == 600)
+        #expect(results.lineResults[2].value?.asDecimal == 900)
+    }
+    
+    @Test func variableWithAggregateChained() async throws {
+        let results = evaluate("a = 10\nb = =total\nc = b + 5\na + c")
+        
+        #expect(results.lineResults.count == 4)
+        #expect(results.lineResults[0].value?.asDecimal == 10)
+        #expect(results.lineResults[1].value?.asDecimal == 10)
+        #expect(results.lineResults[2].value?.asDecimal == 15)
+        #expect(results.lineResults[3].value?.asDecimal == 25)
+    }
 
 }

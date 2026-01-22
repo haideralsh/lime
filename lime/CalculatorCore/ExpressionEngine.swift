@@ -32,7 +32,13 @@ private struct ParsedLine {
     let statement: Statement?
     let usesAggregate: Bool
     let usesSubtotal: Bool
+    var dependsOnAggregate: Bool
     let parseError: Error?
+    
+    var assignedVariableName: String? {
+        guard case .assignment(let a) = statement else { return nil }
+        return a.name
+    }
 }
 
 public struct EvaluationResult {
@@ -69,6 +75,7 @@ public final class ExpressionEngine {
                     statement: nil,
                     usesAggregate: false,
                     usesSubtotal: false,
+                    dependsOnAggregate: false,
                     parseError: nil
                 ))
                 continue
@@ -90,6 +97,7 @@ public final class ExpressionEngine {
                         statement: stmt,
                         usesAggregate: usesAgg,
                         usesSubtotal: usesSub,
+                        dependsOnAggregate: false,
                         parseError: nil
                     ))
                 } else {
@@ -100,6 +108,7 @@ public final class ExpressionEngine {
                         statement: nil,
                         usesAggregate: false,
                         usesSubtotal: false,
+                        dependsOnAggregate: false,
                         parseError: nil
                     ))
                 }
@@ -111,10 +120,13 @@ public final class ExpressionEngine {
                     statement: nil,
                     usesAggregate: false,
                     usesSubtotal: false,
+                    dependsOnAggregate: false,
                     parseError: error
                 ))
             }
         }
+        
+        computeAggregateDependencies(&parsedLines)
         
         let (lineResults, sum) = evaluateWithAggregates(parsedLines: parsedLines)
         return EvaluationResult(lineResults: lineResults, sum: sum)
@@ -182,6 +194,76 @@ public final class ExpressionEngine {
         }
     }
     
+    private func collectVariableReferences(_ expr: Expr) -> Set<String> {
+        var refs = Set<String>()
+        collectVariableReferencesHelper(expr, into: &refs)
+        return refs
+    }
+    
+    private func collectVariableReferencesHelper(_ expr: Expr, into refs: inout Set<String>) {
+        switch expr {
+        case let v as VariableExpr:
+            refs.insert(v.name)
+        case let b as BinaryExpr:
+            collectVariableReferencesHelper(b.left, into: &refs)
+            collectVariableReferencesHelper(b.right, into: &refs)
+        case let u as UnaryExpr:
+            collectVariableReferencesHelper(u.operand, into: &refs)
+        case let p as ParenExpr:
+            collectVariableReferencesHelper(p.inner, into: &refs)
+        case let pct as PercentExpr:
+            collectVariableReferencesHelper(pct.operand, into: &refs)
+        case let pctOf as PercentOfExpr:
+            collectVariableReferencesHelper(pctOf.percent, into: &refs)
+            collectVariableReferencesHelper(pctOf.base, into: &refs)
+        case let pctAdj as PercentAdjustExpr:
+            collectVariableReferencesHelper(pctAdj.percent, into: &refs)
+            collectVariableReferencesHelper(pctAdj.base, into: &refs)
+        default:
+            break
+        }
+    }
+    
+    private func statementVariableReferences(_ stmt: Statement) -> Set<String> {
+        switch stmt {
+        case .expression(let expr):
+            return collectVariableReferences(expr)
+        case .assignment(let assignment):
+            return collectVariableReferences(assignment.value)
+        }
+    }
+    
+    private func computeAggregateDependencies(_ parsedLines: inout [ParsedLine]) {
+        var aggregateDependentVars = Set<String>()
+        
+        for parsed in parsedLines {
+            if parsed.usesAggregate || parsed.usesSubtotal {
+                if let name = parsed.assignedVariableName {
+                    aggregateDependentVars.insert(name)
+                }
+            }
+        }
+        
+        var changed = true
+        while changed {
+            changed = false
+            for i in parsedLines.indices {
+                guard !parsedLines[i].dependsOnAggregate else { continue }
+                guard let stmt = parsedLines[i].statement else { continue }
+                
+                let refs = statementVariableReferences(stmt)
+                if !refs.isDisjoint(with: aggregateDependentVars) {
+                    parsedLines[i].dependsOnAggregate = true
+                    changed = true
+                    
+                    if let name = parsedLines[i].assignedVariableName {
+                        aggregateDependentVars.insert(name)
+                    }
+                }
+            }
+        }
+    }
+    
     private func evaluateWithAggregates(parsedLines: [ParsedLine]) -> (lineResults: [LineResult], sum: Decimal) {
         var results = Array(repeating: LineResult(
             lineIndex: 0,
@@ -213,7 +295,7 @@ public final class ExpressionEngine {
                 continue
             }
             
-            if parsed.usesAggregate || parsed.usesSubtotal {
+            if parsed.usesAggregate || parsed.usesSubtotal || parsed.dependsOnAggregate {
                 results[idx] = LineResult(
                     lineIndex: idx,
                     sourceRange: parsed.sourceRange,
@@ -251,7 +333,7 @@ public final class ExpressionEngine {
             environment[BuiltinAggregateName.avg] = avgValue
         }
         
-        for parsed in parsedLines where parsed.usesAggregate {
+        for parsed in parsedLines where parsed.usesAggregate || parsed.dependsOnAggregate {
             let idx = parsed.lineIndex
             
             if results[idx].error != nil {
@@ -262,18 +344,20 @@ public final class ExpressionEngine {
                 continue
             }
             
-            var prevValue: Value? = nil
-            for i in stride(from: idx - 1, through: 0, by: -1) {
-                if let value = results[i].value {
-                    prevValue = value
-                    break
+            if parsed.usesAggregate {
+                var prevValue: Value? = nil
+                for i in stride(from: idx - 1, through: 0, by: -1) {
+                    if let value = results[i].value {
+                        prevValue = value
+                        break
+                    }
                 }
-            }
-            
-            if let pv = prevValue {
-                environment[BuiltinAggregateName.prev] = pv
-            } else {
-                environment.remove(BuiltinAggregateName.prev)
+                
+                if let pv = prevValue {
+                    environment[BuiltinAggregateName.prev] = pv
+                } else {
+                    environment.remove(BuiltinAggregateName.prev)
+                }
             }
             
             let evaluator = Evaluator(environment: environment)
@@ -387,7 +471,7 @@ public final class ExpressionEngine {
         for (i, result) in results.enumerated() {
             let parsed = parsedLines[i]
             
-            if parsed.usesAggregate || parsed.usesSubtotal { continue }
+            if parsed.usesAggregate || parsed.usesSubtotal || parsed.dependsOnAggregate { continue }
             guard let value = result.value else { continue }
             guard case .quantity(let q) = value else { continue }
             
